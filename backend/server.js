@@ -14,7 +14,7 @@ const httpServer = createServer(app);
 
 app.use(
   cors({
-    origin: ["http://localhost:5173","https://community-form-e22b.onrender.com"],
+    origin: ["http://localhost:5173","https://community-form-1.onrender.com"],
     credentials: true,
   })
 );
