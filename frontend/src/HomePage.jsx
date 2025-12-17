@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ThumbsUp, Trash2, MessageCircle } from "lucide-react";
-import axios from "axios";
+import axiosInstance from "../axios";
 
 export default function CommunityPage() {
   const [comments, setComments] = useState([]);
@@ -18,8 +18,8 @@ export default function CommunityPage() {
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:5000/api/get-comments"
+        const response = await axiosInstance.get(
+          "/api/get-comments"
         );
         setComments(response.data);
         console.log(response.data);
@@ -34,7 +34,7 @@ export default function CommunityPage() {
   const addComment = async (text, userid) => {
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/add-comment",
+        "/api/add-comment",
         {
           text: text,
           userid: userid,
@@ -48,7 +48,7 @@ export default function CommunityPage() {
   };
 
   const addReply = (commentId) => {
-    axios.put(`http://localhost:5000/api/add-reply/${commentId}`, {
+    axios.put(`/api/add-reply/${commentId}`, {
       replyText: replyText,
     });
 
@@ -64,7 +64,7 @@ export default function CommunityPage() {
   };
 
   const likeComment = async (commentId) => {
-    await axios.put(`http://localhost:5000/api/like-comment/${commentId}`);
+    await axios.put(`/api/like-comment/${commentId}`);
 
     setComments(
       comments.map((c) =>
@@ -74,12 +74,12 @@ export default function CommunityPage() {
   };
 
   const deleteComment = async (commentId) => {
-    await axios.delete(`http://localhost:5000/api/delete-comment/${commentId}`);
+    await axios.delete(`/api/delete-comment/${commentId}`);
     setComments(comments.filter((c) => c._id !== commentId));
   };
 
   const handleLogin = async () => {
-    const response = await axios.post("http://localhost:5000/api/login", {
+    const response = await axios.post("/api/login", {
       name: loginData.name,
       email: loginData.email,
       password: loginData.password,
