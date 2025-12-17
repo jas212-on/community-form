@@ -33,7 +33,7 @@ export default function CommunityPage() {
 
   const addComment = async (text, userid) => {
     try {
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         "/api/add-comment",
         {
           text: text,
@@ -48,7 +48,7 @@ export default function CommunityPage() {
   };
 
   const addReply = (commentId) => {
-    axios.put(`/api/add-reply/${commentId}`, {
+  axiosInstance.put(`/api/add-reply/${commentId}`, {
       replyText: replyText,
     });
 
@@ -64,7 +64,7 @@ export default function CommunityPage() {
   };
 
   const likeComment = async (commentId) => {
-    await axios.put(`/api/like-comment/${commentId}`);
+    await axiosInstance.put(`/api/like-comment/${commentId}`);
 
     setComments(
       comments.map((c) =>
@@ -74,12 +74,12 @@ export default function CommunityPage() {
   };
 
   const deleteComment = async (commentId) => {
-    await axios.delete(`/api/delete-comment/${commentId}`);
+    await axiosInstance.delete(`/api/delete-comment/${commentId}`);
     setComments(comments.filter((c) => c._id !== commentId));
   };
 
   const handleLogin = async () => {
-    const response = await axios.post("/api/login", {
+    const response = await axiosInstance.post("/api/login", {
       name: loginData.name,
       email: loginData.email,
       password: loginData.password,
