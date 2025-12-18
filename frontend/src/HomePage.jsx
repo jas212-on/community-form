@@ -154,7 +154,7 @@ export default function CommunityPage() {
             }
             className="w-full p-4 border-2 border-gray-200 rounded-xl mb-3 resize-none focus:border-blue-500 focus:outline-none transition"
             rows="4"
-            disabled={isLoggedIn}
+            disabled={!isLoggedIn}
           />
           <button
             disabled={!isLoggedIn}
