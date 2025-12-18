@@ -42,15 +42,16 @@ app.get(
 // Step 2: Callback
 app.get(
   "/auth/google/callback",
-  passport.authenticate("google",(err, user, info) => {
-  console.log(err, user, info)}, {
-    failureRedirect: "/login",
+  passport.authenticate("google", {
+    failureRedirect: "https://community-form-1.onrender.com/",
+    session: true,
   }),
   (req, res) => {
     // Successful login
     res.redirect("https://community-form-1.onrender.com/");
   }
 );
+
 
 // Logout
 app.get("/auth/logout", (req, res, next) => {
