@@ -47,7 +47,7 @@ app.get(
   }),
   (req, res) => {
     // Successful login
-    res.redirect("http://localhost:5173");
+    res.redirect("https://community-form-1.onrender.com/");
   }
 );
 
