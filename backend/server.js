@@ -5,6 +5,9 @@ import cors from "cors";
 import { createServer } from "http";
 import User from "./User.js";
 import Comment from "./Comment.js";
+import session from "express-session";
+import passport from "passport";
+import "./passport.js";
 
 dotenv.config();
 
@@ -14,42 +17,66 @@ const httpServer = createServer(app);
 
 app.use(
   cors({
-    origin: ["http://localhost:5173","https://community-form-1.onrender.com"],
+    origin: ["http://localhost:5173", "https://community-form-1.onrender.com"],
     credentials: true,
   })
 );
 app.use(express.json());
 
-app.post("/api/login", async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
+app.use(
+  session({
+    secret: "keyboard cat",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
 
-    let user = await User.findOne({ email });
+app.use(passport.initialize());
+app.use(passport.session());
 
-    if (!user) {
-      user = await User.create({
-        name,
-        email,
-        password,
-      });
+app.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
 
-      return res.status(201).json({
-        message: "New user created",
-        userid: user._id,
-      });
-    }
-
-    if (user.password !== password) {
-      return res.status(401).json({ message: "Invalid password" });
-    }
-
-    res.json({
-      message: "Login successful",
-      userid: user._id,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+// Step 2: Callback
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "/login",
+  }),
+  (req, res) => {
+    // Successful login
+    res.redirect("http://localhost:5173");
   }
+);
+
+// Logout
+app.get("/auth/logout", (req, res, next) => {
+  req.logout((err) => {
+    if (err) return next(err);
+
+    req.session.destroy((err) => {
+      if (err) return next(err);
+
+      res.clearCookie("connect.sid", { path: "/" });
+      res.json({ success: true, message: "Logged out successfully" });
+    });
+  });
+});
+
+const isAuth = (req, res, next) => {
+  if (req.isAuthenticated()) return next();
+  res.redirect("/login");
+};
+
+app.get("/auth/current-user", isAuth, (req, res) => {
+  res.json({
+    id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+    photo: req.user.profilePic,
+  });
 });
 
 app.get("/api/get-comments", async (req, res) => {
@@ -61,7 +88,7 @@ app.get("/api/get-comments", async (req, res) => {
   }
 });
 
-app.post("/api/add-comment", async (req, res) => {
+app.post("/api/add-comment", isAuth, async (req, res) => {
   try {
     const { text, userid } = req.body;
 
@@ -70,6 +97,7 @@ app.post("/api/add-comment", async (req, res) => {
       likes: 0,
       replies: [],
       userid,
+      username: req.user.name,
     });
 
     res.status(201).json(newComment);
@@ -79,7 +107,7 @@ app.post("/api/add-comment", async (req, res) => {
   }
 });
 
-app.put("/api/like-comment/:id", async (req, res) => {
+app.put("/api/like-comment/:id", isAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -90,13 +118,13 @@ app.put("/api/like-comment/:id", async (req, res) => {
     if (!updatedComment) {
       return res.status(404).json({ message: "Comment not found" });
     }
-
+    res.json(updatedComment);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-app.put("/api/add-reply/:id", async (req, res) => {
+app.put("/api/add-reply/:id", isAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { replyText } = req.body;
@@ -112,13 +140,12 @@ app.put("/api/add-reply/:id", async (req, res) => {
     if (!updatedComment) {
       return res.status(404).json({ message: "Comment not found" });
     }
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-app.delete("/api/delete-comment/:id", async (req, res) => {
+app.delete("/api/delete-comment/:id", isAuth, async (req, res) => {
   try {
     const { id } = req.params;
 

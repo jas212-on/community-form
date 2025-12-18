@@ -4,7 +4,8 @@ const commentSchema = new mongoose.Schema({
   text: String,
   likes: Number,
   replies: [String],
-  userid: String
+  userid: String,
+  username: String
 });
 
 const Comment = mongoose.model("Comment", commentSchema);
