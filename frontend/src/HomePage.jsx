@@ -96,7 +96,8 @@ export default function CommunityPage() {
   };
 
   const handleLogin = async () => {
-    window.location.href = "https://community-form-e22b.onrender.com/auth/google";
+    window.location.href =
+      "https://community-form-e22b.onrender.com/auth/google";
   };
 
   const handleLogout = async () => {
@@ -176,12 +177,8 @@ export default function CommunityPage() {
               className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition"
             >
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
-                  <img
-                    src={user.photo}
-                    alt="profile"
-                    className="w-full h-full object-cover"
-                  />
+                <div className="bg-linear-to-br from-blue-400 to-indigo-500 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold shrink-0">
+                  {comment.username.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
