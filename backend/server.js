@@ -42,7 +42,8 @@ app.get(
 // Step 2: Callback
 app.get(
   "/auth/google/callback",
-  passport.authenticate("google", {
+  passport.authenticate("google",(err, user, info) => {
+  console.log(err, user, info)}, {
     failureRedirect: "/login",
   }),
   (req, res) => {
