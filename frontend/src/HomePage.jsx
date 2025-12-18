@@ -96,7 +96,7 @@ export default function CommunityPage() {
   };
 
   const handleLogin = async () => {
-    window.location.href = "http://localhost:5000/auth/google";
+    window.location.href = "https://community-form-e22b.onrender.com/auth/google";
   };
 
   const handleLogout = async () => {
