@@ -8,6 +8,7 @@ import Comment from "./Comment.js";
 import session from "express-session";
 import passport from "passport";
 import "./passport.js";
+import mongoose from "mongoose";
 
 dotenv.config();
 
@@ -27,12 +28,11 @@ app.set("trust proxy", 1);
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET, 
+    secret: "keyboard cat", 
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: true,        
-      sameSite: "none", 
+      secure: process.env.SECURE,        
       maxAge: 24 * 60 * 60 * 1000, 
     },
   })
@@ -50,12 +50,12 @@ app.get(
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
-    failureRedirect: "https://community-form-1.onrender.com/",
+    failureRedirect: process.env.CLIENT_URL,
     session: true,
   }),
   (req, res) => {
     // Successful login
-    res.redirect("https://community-form-1.onrender.com/");
+    res.redirect(process.env.CLIENT_URL);
   }
 );
 
@@ -76,7 +76,7 @@ app.get("/auth/logout", (req, res, next) => {
 
 const isAuth = (req, res, next) => {
   if (req.isAuthenticated()) return next();
-  res.redirect("/login");
+  res.redirect("/");
 };
 
 app.get("/auth/current-user", isAuth, (req, res) => {
@@ -85,6 +85,7 @@ app.get("/auth/current-user", isAuth, (req, res) => {
     name: req.user.name,
     email: req.user.email,
     photo: req.user.profilePic,
+    likedComments: req.user.likedComments
   });
 });
 
@@ -107,6 +108,7 @@ app.post("/api/add-comment", isAuth, async (req, res) => {
       replies: [],
       userid,
       username: req.user.name,
+      likedComments: []
     });
 
     res.status(201).json(newComment);
@@ -120,18 +122,46 @@ app.put("/api/like-comment/:id", isAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const updatedComment = await Comment.findByIdAndUpdate(id, {
-      $inc: { likes: 1 },
-    });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid comment ID" });
+    }
 
-    if (!updatedComment) {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    const comment = await Comment.findById(id);
+    if (!comment) {
       return res.status(404).json({ message: "Comment not found" });
     }
-    res.json(updatedComment);
+
+    const alreadyLiked = user.likedComments.includes(id);
+
+    if (alreadyLiked) {
+      // Unlike
+      user.likedComments.pull(id);
+      comment.likes -= 1;
+    } else {
+      // Like
+      user.likedComments.push(id);
+      comment.likes += 1;
+    }
+
+    await user.save();
+    await comment.save();
+
+    res.json({
+      liked: !alreadyLiked,
+      likes: comment.likes,
+      commentId: comment._id,
+    });
   } catch (error) {
+    console.error("Like comment error:", error);
     res.status(500).json({ message: error.message });
   }
 });
+
 
 app.put("/api/add-reply/:id", isAuth, async (req, res) => {
   try {

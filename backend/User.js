@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema({
   },
   name: String,
   email: String,
-  profilePic: String
+  profilePic: String,
+  likedComments: [String]
 });
 
 const User = mongoose.model("User", userSchema);

@@ -7,9 +7,6 @@ export default function CommunityPage() {
   const [newComment, setNewComment] = useState("");
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState("");
-
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const [user, setUser] = useState({
@@ -18,6 +15,7 @@ export default function CommunityPage() {
     email: null,
     photo: null,
     provider: null,
+    likedComments: [],
   });
 
   useEffect(() => {
@@ -25,11 +23,10 @@ export default function CommunityPage() {
       try {
         setIsLoading(true);
         const res = await axiosInstance.get("/auth/current-user");
-        console.log(res.data.photo);
+        console.log(res.data);
         setUser(res.data);
-        setIsLoggedIn(true);
       } catch (err) {
-        console.error(err.response?.data || err.message);
+        console.error(err.message);
       } finally {
         setIsLoading(false);
       }
@@ -83,8 +80,16 @@ export default function CommunityPage() {
 
   const likeComment = async (commentId) => {
     setComments(
-      comments.map((c) =>
-        c._id === commentId ? { ...c, likes: c.likes + 1 } : c
+      comments.map((c) => {
+        if (c._id === commentId && user.likedComments.includes(commentId)) {
+          user.likedComments.splice(user.likedComments.indexOf(commentId), 1);
+          return { ...c, likes: c.likes - 1 };
+        } else {
+          user.likedComments.push(commentId);
+          return { ...c, likes: c.likes + 1 };
+        }
+      }
+        
       )
     );
     await axiosInstance.put(`/api/like-comment/${commentId}`);
@@ -97,20 +102,20 @@ export default function CommunityPage() {
 
   const handleLogin = async () => {
     window.location.href =
-      "https://community-form-e22b.onrender.com/auth/google";
+      `${import.meta.env.VITE_BACKEND_URL}/auth/google`;
   };
 
   const handleLogout = async () => {
     try {
       setIsLoading(true);
       await axiosInstance.get("/auth/logout");
-      setIsLoggedIn(false);
       setUser({
         id: null,
         name: null,
         email: null,
         photo: null,
         provider: null,
+        likedComments: [],
       });
     } catch (err) {
       console.error(err.response?.data || err.message);
@@ -155,10 +160,10 @@ export default function CommunityPage() {
             }
             className="w-full p-4 border-2 border-gray-200 rounded-xl mb-3 resize-none focus:border-blue-500 focus:outline-none transition"
             rows="4"
-            disabled={!isLoggedIn}
+            disabled={!user.id}
           />
           <button
-            disabled={!isLoggedIn}
+            disabled={!user.id}
             onClick={() => addComment(newComment, user.id)}
             className={`px-6 py-3 rounded-lg font-semibold transition ${
               user.id
@@ -192,7 +197,7 @@ export default function CommunityPage() {
 
               <div className="flex items-center gap-4 text-sm text-gray-600 ml-13">
                 <button
-                  disabled={!isLoggedIn}
+                  disabled={!user.id}
                   onClick={() => likeComment(comment._id)}
                   className={`flex items-center gap-1 transition ${
                     user.id
@@ -205,7 +210,7 @@ export default function CommunityPage() {
                 </button>
 
                 <button
-                  disabled={!isLoggedIn}
+                  disabled={!user.id}
                   onClick={() => setReplyingTo(comment._id)}
                   className={`flex items-center gap-1 transition ${
                     user.id
