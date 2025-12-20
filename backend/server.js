@@ -26,13 +26,15 @@ app.use(express.json());
 
 app.set("trust proxy", 1);
 
+const isProduction = process.env.NODE_ENV === "production";
+
 app.use(
   session({
     secret: "keyboard cat", 
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.SECURE,        
+      secure: isProduction,        
       maxAge: 24 * 60 * 60 * 1000, 
     },
   })
